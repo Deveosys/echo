@@ -17,24 +17,25 @@ function dirToArray($dir)
     try {
         $result = [];
         $cdir = scandir($dir);
-        foreach ($cdir as $value) {
-            if (! in_array($value, ['.', '..'])) {
-                $fullPath = $dir . DIRECTORY_SEPARATOR . $value;
-                $isDir = is_dir($fullPath);
-                $item = [
-                    'name' => $value,
-                    'dir' => $isDir,
-                    'path' => $fullPath,
-                    'children' => $isDir ? dirToArray($fullPath) : [],
-                ];
-                $result[] = $item;
-            }
-        }
+        dd($cdir);
+        // foreach ($cdir as $value) {
+        //     if (! in_array($value, ['.', '..'])) {
+        //         $fullPath = $dir . DIRECTORY_SEPARATOR . $value;
+        //         $isDir = is_dir($fullPath);
+        //         $item = [
+        //             'name' => $value,
+        //             'dir' => $isDir,
+        //             'path' => $fullPath,
+        //             'children' => $isDir ? dirToArray($fullPath) : [],
+        //         ];
+        //         $result[] = $item;
+        //     }
+        // }
 
         return $result;
     } catch (\Exception $e) {
         Log::error("Error in dirToArray: " . $e->getMessage());
-        return [];
+        throw $e;
     }
 }
 
@@ -56,8 +57,7 @@ class BackupController extends Controller
     public function create()
     {
         return Inertia::render('backups/create', [
-            // 'sourceTree' => dirToArray(storage_path('sources')),
-            'sourceTree' => [],
+            'sourceTree' => dirToArray(storage_path('sources')),
             'destinations' => Destination::with('destination_type')->get(),
         ]);
     }

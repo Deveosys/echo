@@ -8,28 +8,34 @@ use App\Jobs\ProcessBackup;
 use App\Models\Backup;
 use App\Models\BackupInstance;
 use App\Models\Destination;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 function dirToArray($dir)
 {
-    $result = [];
-    $cdir = scandir($dir);
-    foreach ($cdir as $value) {
-        if (! in_array($value, ['.', '..'])) {
-            $fullPath = $dir.DIRECTORY_SEPARATOR.$value;
-            $isDir = is_dir($fullPath);
-            $item = [
-                'name' => $value,
-                'dir' => $isDir,
-                'path' => $fullPath,
-                'children' => $isDir ? dirToArray($fullPath) : [],
-            ];
-            $result[] = $item;
+    try {
+        $result = [];
+        $cdir = scandir($dir);
+        foreach ($cdir as $value) {
+            if (! in_array($value, ['.', '..'])) {
+                $fullPath = $dir . DIRECTORY_SEPARATOR . $value;
+                $isDir = is_dir($fullPath);
+                $item = [
+                    'name' => $value,
+                    'dir' => $isDir,
+                    'path' => $fullPath,
+                    'children' => $isDir ? dirToArray($fullPath) : [],
+                ];
+                $result[] = $item;
+            }
         }
-    }
 
-    return $result;
+        return $result;
+    } catch (\Exception $e) {
+        Log::error("Error in dirToArray: " . $e->getMessage());
+        return [];
+    }
 }
 
 class BackupController extends Controller
@@ -49,6 +55,9 @@ class BackupController extends Controller
      */
     public function create()
     {
+
+        Log::error("storage_path('sources'): " . storage_path('sources'));
+
         return Inertia::render('backups/create', [
             'sourceTree' => dirToArray(storage_path('sources')),
             'destinations' => Destination::with('destination_type')->get(),
@@ -64,7 +73,7 @@ class BackupController extends Controller
 
         $slugIndex = 0;
         do {
-            $slug = Str::slug($data['name']).($slugIndex > 0 ? '-'.$slugIndex : '');
+            $slug = Str::slug($data['name']) . ($slugIndex > 0 ? '-' . $slugIndex : '');
             $backup = Backup::where('slug', $slug)->first();
             $slugIndex++;
         } while ($backup);

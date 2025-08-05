@@ -17,20 +17,20 @@ function dirToArray($dir)
     try {
         $result = [];
         $cdir = scandir($dir);
-        dd($cdir);
-        // foreach ($cdir as $value) {
-        //     if (! in_array($value, ['.', '..'])) {
-        //         $fullPath = $dir . DIRECTORY_SEPARATOR . $value;
-        //         $isDir = is_dir($fullPath);
-        //         $item = [
-        //             'name' => $value,
-        //             'dir' => $isDir,
-        //             'path' => $fullPath,
-        //             'children' => $isDir ? dirToArray($fullPath) : [],
-        //         ];
-        //         $result[] = $item;
-        //     }
-        // }
+        foreach ($cdir as $value) {
+            if (! in_array($value, ['.', '..'])) {
+                $fullPath = $dir . DIRECTORY_SEPARATOR . $value;
+                echo $fullPath . "\n";
+                $isDir = is_dir($fullPath);
+                $item = [
+                    'name' => $value,
+                    'dir' => $isDir,
+                    'path' => $fullPath,
+                    'children' => $isDir ? dirToArray($fullPath) : [],
+                ];
+                $result[] = $item;
+            }
+        }
 
         return $result;
     } catch (\Exception $e) {

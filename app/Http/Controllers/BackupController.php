@@ -56,7 +56,8 @@ class BackupController extends Controller
     public function create()
     {
 
-        Log::error("storage_path('sources'): " . storage_path('sources'));
+        // Log::info("storage_path('sources'): " . storage_path('sources'));
+        dd(storage_path('sources'));
 
         return Inertia::render('backups/create', [
             'sourceTree' => dirToArray(storage_path('sources')),

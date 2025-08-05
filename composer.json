@@ -13,7 +13,6 @@
         "aws/aws-sdk-php": "^3.351",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/framework": "^12.0",
-        "laravel/nightwatch": "^1.11",
         "laravel/tinker": "^2.10.1",
         "tightenco/ziggy": "^2.4"
     },

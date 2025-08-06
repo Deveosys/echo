@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Backup;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class BackupService
 {
@@ -34,5 +35,17 @@ class BackupService
             Log::error('Error in dirToArray: '.$e->getMessage());
             throw $e;
         }
+    }
+
+    public function generateBackupSlug($name)
+    {
+        $slugIndex = 0;
+        do {
+            $slug = Str::slug($name).($slugIndex > 0 ? '-'.$slugIndex : '');
+            $backup = Backup::where('slug', $slug)->first();
+            $slugIndex++;
+        } while ($backup);
+
+        return $slug;
     }
 }

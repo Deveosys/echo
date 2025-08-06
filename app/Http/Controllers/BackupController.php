@@ -10,7 +10,6 @@ use App\Models\BackupInstance;
 use App\Models\Destination;
 use App\Services\BackupService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class BackupController extends Controller
@@ -39,18 +38,11 @@ class BackupController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreBackupRequest $request)
+    public function store(StoreBackupRequest $request, BackupService $backupService)
     {
         $data = $request->validated();
-
-        $slugIndex = 0;
-        do {
-            $slug = Str::slug($data['name']).($slugIndex > 0 ? '-'.$slugIndex : '');
-            $backup = Backup::where('slug', $slug)->first();
-            $slugIndex++;
-        } while ($backup);
-
-        $backup = Backup::create(
+        $slug = $backupService->generateBackupSlug($data['name']);
+        Backup::create(
             [
                 'name' => $data['name'],
                 'slug' => $slug,
@@ -88,11 +80,11 @@ class BackupController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateBackupRequest $request, Backup $backup)
+    public function update(UpdateBackupRequest $request, Backup $backup, BackupService $backupService)
     {
         $data = $request->validated();
-
-        $backup->update($data);
+        $slug = $backupService->generateBackupSlug($data['name']);
+        $backup->update([...$data, 'slug' => $slug]);
 
         return redirect()->route('backups.show', $backup);
     }

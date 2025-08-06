@@ -55,7 +55,8 @@ class ProcessBackup implements ShouldBeUnique, ShouldQueue
         }
 
         Log::info($this->backupInstance->id.'@'.$backup->name.' - Source path: '.$sourcePath);
-        Log::info($this->backupInstance->id.'@'.$backup->name.' - size: '.filesize($sourcePath));
+        $fileSizeMB = filesize($sourcePath) / 1024 / 1024;
+        Log::info($this->backupInstance->id.'@'.$backup->name.' - size: '.$fileSizeMB.'MB');
 
         $s3Client = $destinationService->getDestinationClient($backup->destination);
         $bucketName = $backup->destination->destination_type->bucket_name;
@@ -69,7 +70,10 @@ class ProcessBackup implements ShouldBeUnique, ShouldQueue
                 'Body' => fopen($sourcePath, 'r'),
                 '@http' => [
                     'progress' => function ($expectedDl, $dl, $expectedUl, $ul) use ($backup) {
-                        Log::info($this->backupInstance->id.'@'.$backup->name.' - '.$expectedUl.' of '.$ul.' uploaded.');
+                        if ($expectedUl === 0) {
+                            return;
+                        }
+                        Log::info($this->backupInstance->id.'@'.$backup->name.' - '.($ul / $expectedUl * 100).'% uploaded.');
                     },
                 ],
             ]);

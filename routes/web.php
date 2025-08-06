@@ -18,6 +18,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('backups', BackupController::class);
     Route::get('backups/{backup}/execute', [BackupController::class, 'execute'])->name('backups.execute');
+    Route::post('backups/load-source-tree-level', [BackupController::class, 'loadSourceTreeLevel'])->name('backups.loadSourceTreeLevel');
 });
 
 require __DIR__.'/settings.php';

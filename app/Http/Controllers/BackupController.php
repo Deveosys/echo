@@ -8,36 +8,10 @@ use App\Jobs\ProcessBackup;
 use App\Models\Backup;
 use App\Models\BackupInstance;
 use App\Models\Destination;
-use Illuminate\Support\Facades\Log;
+use App\Services\BackupService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
-
-function dirToArray($dir)
-{
-    try {
-        $result = [];
-        $cdir = scandir($dir);
-        foreach ($cdir as $value) {
-            if (! in_array($value, ['.', '..'])) {
-                $fullPath = $dir . DIRECTORY_SEPARATOR . $value;
-                echo $fullPath . "\n";
-                $isDir = is_dir($fullPath);
-                $item = [
-                    'name' => $value,
-                    'dir' => $isDir,
-                    'path' => $fullPath,
-                    'children' => $isDir ? dirToArray($fullPath) : [],
-                ];
-                $result[] = $item;
-            }
-        }
-
-        return $result;
-    } catch (\Exception $e) {
-        Log::error("Error in dirToArray: " . $e->getMessage());
-        throw $e;
-    }
-}
 
 class BackupController extends Controller
 {
@@ -54,10 +28,10 @@ class BackupController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(BackupService $backupService)
     {
         return Inertia::render('backups/create', [
-            'sourceTree' => dirToArray(storage_path('sources')),
+            'sourceTree' => $backupService->getSourceTreeLevel(storage_path('sources')),
             'destinations' => Destination::with('destination_type')->get(),
         ]);
     }
@@ -71,7 +45,7 @@ class BackupController extends Controller
 
         $slugIndex = 0;
         do {
-            $slug = Str::slug($data['name']) . ($slugIndex > 0 ? '-' . $slugIndex : '');
+            $slug = Str::slug($data['name']).($slugIndex > 0 ? '-'.$slugIndex : '');
             $backup = Backup::where('slug', $slug)->first();
             $slugIndex++;
         } while ($backup);
@@ -134,5 +108,12 @@ class BackupController extends Controller
         ProcessBackup::dispatch($backupInstance);
 
         return redirect()->route('backups.show', $backup);
+    }
+
+    public function loadSourceTreeLevel(BackupService $backupService, Request $request)
+    {
+        $data = $request->validate(['dir' => 'required|string']);
+
+        return $backupService->getSourceTreeLevel($data['dir']);
     }
 }

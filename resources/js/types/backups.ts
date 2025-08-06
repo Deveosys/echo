@@ -24,6 +24,7 @@ export type SourceTreeItem = {
     path: string;
     children: SourceTreeItem[];
     selected?: boolean;
+    loaded?: boolean;
 };
 
 export type SourceTree = SourceTreeItem[];

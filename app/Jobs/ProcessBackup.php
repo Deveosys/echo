@@ -44,6 +44,7 @@ class ProcessBackup implements ShouldBeUnique, ShouldQueue
         $sourcePath = $backup->source_path;
         $isZip = false;
         if (is_dir($sourcePath)) {
+            Log::info($this->backupInstance->id.'@'.$backup->name.' - Creating zip file');
             $zipPath = storage_path('sources/'.$backup->slug.'-'.now()->format('Y-m-d-H-i-s').'.zip');
             $zip = $zipService->createZipFile($zipPath);
             $zipService->addFilesToZip($sourcePath, $zip);
@@ -52,6 +53,9 @@ class ProcessBackup implements ShouldBeUnique, ShouldQueue
             $isZip = true;
             Log::info($this->backupInstance->id.'@'.$backup->name.' - Zip file created: '.$zipPath);
         }
+
+        Log::info($this->backupInstance->id.'@'.$backup->name.' - Source path: '.$sourcePath);
+        Log::info($this->backupInstance->id.'@'.$backup->name.' - size: '.filesize($sourcePath));
 
         $s3Client = $destinationService->getDestinationClient($backup->destination);
         $bucketName = $backup->destination->destination_type->bucket_name;
@@ -63,7 +67,11 @@ class ProcessBackup implements ShouldBeUnique, ShouldQueue
                 'Bucket' => $bucketName,
                 'Key' => $keyName,
                 'Body' => fopen($sourcePath, 'r'),
-                // 'ACL'    => 'public-read',
+                '@http' => [
+                    'progress' => function ($expectedDl, $dl, $expectedUl, $ul) use ($backup) {
+                        Log::info($this->backupInstance->id.'@'.$backup->name.' - '.$expectedUl.' of '.$ul.' uploaded.');
+                    },
+                ],
             ]);
             Log::info($this->backupInstance->id.'@'.$backup->name.' - S3 object uploaded: '.$keyName);
 

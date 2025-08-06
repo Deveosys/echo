@@ -61,7 +61,8 @@ class BackupController extends Controller
     public function show(Backup $backup)
     {
         return Inertia::render('backups/show', [
-            'backup' => $backup->load('destination.destination_type', 'backupInstances'),
+            'backup' => fn () => $backup->load('destination.destination_type'),
+            'backup_instances' => fn () => $backup->backupInstances()->get(),
         ]);
     }
 

@@ -7,11 +7,11 @@ import Timer from '@/components/ui/timer';
 import AppLayout from '@/layouts/app-layout';
 import { formatTimeToSeconds } from '@/lib/utils';
 import { BreadcrumbItem } from '@/types';
-import { Backup } from '@/types/backups';
-import { Head, Link } from '@inertiajs/react';
-import { useMemo } from 'react';
+import { Backup, BackupInstance } from '@/types/backups';
+import { Head, Link, router } from '@inertiajs/react';
+import { useEffect, useMemo } from 'react';
 
-export default function BackupsShow({ backup }: { backup: Backup }) {
+export default function BackupsShow({ backup, backup_instances }: { backup: Backup; backup_instances: BackupInstance[] }) {
     const breadcrumbs: BreadcrumbItem[] = useMemo(
         () => [
             {
@@ -25,6 +25,22 @@ export default function BackupsShow({ backup }: { backup: Backup }) {
         ],
         [backup],
     );
+
+    useEffect(() => {
+        if (
+            backup_instances.length === 0 ||
+            !backup_instances.some((backupInstance) => {
+                return backupInstance.status === 'processing' || backupInstance.status === 'pending';
+            })
+        ) {
+            return;
+        }
+        const interval = setInterval(() => {
+            router.reload({ only: ['backup_instances'] });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [backup_instances]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -81,15 +97,15 @@ export default function BackupsShow({ backup }: { backup: Backup }) {
                         </CardContent>
                     </Card>
 
-                    <h3 className="text-lg font-bold">Backup Instances ({backup.backup_instances.length})</h3>
-                    {backup.backup_instances.length === 0 && (
+                    <h3 className="text-lg font-bold">Backup Instances ({backup_instances.length})</h3>
+                    {backup_instances.length === 0 && (
                         <Card>
                             <CardContent>
                                 <p>No backup instances found</p>
                             </CardContent>
                         </Card>
                     )}
-                    {backup.backup_instances.map((backupInstance) => (
+                    {backup_instances.map((backupInstance) => (
                         <Card key={backupInstance.id}>
                             <CardHeader>
                                 <CardTitle>

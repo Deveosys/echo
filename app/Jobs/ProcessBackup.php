@@ -5,6 +5,9 @@ namespace App\Jobs;
 use App\Models\BackupInstance;
 use App\Services\DestinationService;
 use App\Services\ZipService;
+use Aws\Exception\MultipartUploadException;
+use Aws\S3\MultipartUploader;
+use Aws\S3\ObjectUploader;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -64,19 +67,48 @@ class ProcessBackup implements ShouldBeUnique, ShouldQueue
 
         try {
             Log::info($this->backupInstance->id.'@'.$backup->name.' - Uploading to S3: '.$keyName);
-            $s3Client->putObject([
-                'Bucket' => $bucketName,
-                'Key' => $keyName,
-                'Body' => fopen($sourcePath, 'r'),
-                '@http' => [
-                    'progress' => function ($expectedDl, $dl, $expectedUl, $ul) use ($backup) {
-                        if ($expectedUl === 0) {
-                            return;
-                        }
-                        Log::info($this->backupInstance->id.'@'.$backup->name.' - '.($ul / $expectedUl * 100).'% uploaded.');
-                    },
-                ],
-            ]);
+
+            $source = fopen($sourcePath, 'rb');
+
+            $uploader = new ObjectUploader(
+                $s3Client,
+                $bucketName,
+                $keyName,
+                $source
+            );
+
+            do {
+                try {
+                    $result = $uploader->upload();
+                    if ($result['@metadata']['statusCode'] == '200') {
+                        Log::info($this->backupInstance->id.'@'.$backup->name.' - File successfully uploaded to '.$result['ObjectURL'].'.');
+                    }
+                    Log::info($this->backupInstance->id.'@'.$backup->name.' - '.$result);
+                    // If the SDK chooses a multipart upload, try again if there is an exception.
+                    // Unlike PutObject calls, multipart upload calls are not automatically retried.
+                } catch (MultipartUploadException $e) {
+                    rewind($source);
+                    $uploader = new MultipartUploader($s3Client, $source, [
+                        'state' => $e->getState(),
+                    ]);
+                }
+            } while (! isset($result));
+
+            fclose($source);
+
+            // $s3Client->putObject([
+            //     'Bucket' => $bucketName,
+            //     'Key' => $keyName,
+            //     'Body' => fopen($sourcePath, 'r'),
+            //     '@http' => [
+            //         'progress' => function ($expectedDl, $dl, $expectedUl, $ul) use ($backup) {
+            //             if ($expectedUl === 0) {
+            //                 return;
+            //             }
+            //             Log::info($this->backupInstance->id.'@'.$backup->name.' - '.($ul / $expectedUl * 100).'% uploaded.');
+            //         },
+            //     ],
+            // ]);
             Log::info($this->backupInstance->id.'@'.$backup->name.' - S3 object uploaded: '.$keyName);
 
             $this->backupInstance->update([

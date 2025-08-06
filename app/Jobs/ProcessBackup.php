@@ -20,6 +20,14 @@ class ProcessBackup implements ShouldBeUnique, ShouldQueue
     public function __construct(private BackupInstance $backupInstance) {}
 
     /**
+     * Get the unique ID for the job.
+     */
+    public function uniqueId(): string
+    {
+        return $this->backupInstance->id;
+    }
+
+    /**
      * Execute the job.
      */
     public function handle(DestinationService $destinationService, ZipService $zipService): void
@@ -32,7 +40,7 @@ class ProcessBackup implements ShouldBeUnique, ShouldQueue
 
         $backup = $this->backupInstance->backup;
 
-        Log::info('Processing backup #'.$backup->name);
+        Log::info($this->backupInstance->id.'@'.$backup->name.' - Processing backup ');
         $sourcePath = $backup->source_path;
         $isZip = false;
         if (is_dir($sourcePath)) {
@@ -42,7 +50,7 @@ class ProcessBackup implements ShouldBeUnique, ShouldQueue
             $zipService->closeZipFile($zip);
             $sourcePath = $zipPath;
             $isZip = true;
-            Log::info('Zip file created: '.$zipPath);
+            Log::info($this->backupInstance->id.'@'.$backup->name.' - Zip file created: '.$zipPath);
         }
 
         $s3Client = $destinationService->getDestinationClient($backup->destination);
@@ -50,13 +58,14 @@ class ProcessBackup implements ShouldBeUnique, ShouldQueue
         $keyName = $backup->slug.'/'.basename($sourcePath);
 
         try {
+            Log::info($this->backupInstance->id.'@'.$backup->name.' - Uploading to S3: '.$keyName);
             $s3Client->putObject([
                 'Bucket' => $bucketName,
                 'Key' => $keyName,
                 'Body' => fopen($sourcePath, 'r'),
                 // 'ACL'    => 'public-read',
             ]);
-            Log::info('S3 object uploaded: '.$keyName);
+            Log::info($this->backupInstance->id.'@'.$backup->name.' - S3 object uploaded: '.$keyName);
 
             $this->backupInstance->update([
                 'status' => 'completed',
@@ -66,7 +75,7 @@ class ProcessBackup implements ShouldBeUnique, ShouldQueue
 
             if ($isZip) {
                 unlink($sourcePath);
-                Log::info('Temporary zip file deleted: '.$sourcePath);
+                Log::info($this->backupInstance->id.'@'.$backup->name.' - Temporary zip file deleted: '.$sourcePath);
             }
         } catch (\Exception $e) {
 
@@ -74,7 +83,7 @@ class ProcessBackup implements ShouldBeUnique, ShouldQueue
             if ($e instanceof \Aws\S3\Exception\S3Exception) {
                 $message = $e->getAwsErrorMessage();
             }
-            Log::error('ERROR during S3 putObject: '.$message);
+            Log::error($this->backupInstance->id.'@'.$backup->name.' - ERROR during S3 putObject: '.$message);
             $this->backupInstance->update([
                 'status' => 'failed',
                 'failed_at' => now(),
@@ -86,10 +95,10 @@ class ProcessBackup implements ShouldBeUnique, ShouldQueue
 
         try {
             $backupInstances = BackupInstance::where('backup_id', '=', $backup->id)->where('status', '=', 'completed')->orderBy('completed_at', 'asc')->get();
-            Log::info('Backup instances: '.$backupInstances->count());
+            Log::info($this->backupInstance->id.'@'.$backup->name.' - Backup instances: '.$backupInstances->count());
             if ($backupInstances->count() > $backup->max_backup_instances) {
-                Log::info('Max backup instances reached for backup '.$backup->id);
-                Log::info($backupInstances->count() - $backup->max_backup_instances.' backup instances to delete');
+                Log::info($this->backupInstance->id.'@'.$backup->name.' - Max backup instances reached for backup '.$backup->id);
+                Log::info($this->backupInstance->id.'@'.$backup->name.' - '.$backupInstances->count() - $backup->max_backup_instances.' backup instances to delete');
                 for ($i = 0; $i < $backupInstances->count() - $backup->max_backup_instances; $i++) {
                     $result = $s3Client->deleteObject([
                         'Bucket' => $bucketName,
@@ -101,18 +110,16 @@ class ProcessBackup implements ShouldBeUnique, ShouldQueue
                         $backupInstances[$i]->key_name
                     );
 
-                    Log::info('Deleted: '.$deleted);
-
                     if ($deleted) {
-                        Log::info('Backup instance '.$backupInstances[$i]->id.' deleted');
+                        Log::info($this->backupInstance->id.'@'.$backup->name.' - Backup instance '.$backupInstances[$i]->id.' deleted');
                         $backupInstances[$i]->delete();
                     } else {
-                        Log::error('Error: '.$backupInstances[$i]->key_name.' was not deleted.'.PHP_EOL);
+                        Log::error($this->backupInstance->id.'@'.$backup->name.' - Error: '.$backupInstances[$i]->key_name.' was not deleted.'.PHP_EOL);
                     }
                 }
             }
         } catch (\Aws\S3\Exception\S3Exception $e) {
-            Log::error('S3 ERROR: '.$e->getAwsErrorMessage());
+            Log::error($this->backupInstance->id.'@'.$backup->name.' - S3 ERROR: '.$e->getAwsErrorMessage());
             throw $e;
         }
     }

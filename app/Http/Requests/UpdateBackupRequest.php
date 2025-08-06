@@ -11,7 +11,7 @@ class UpdateBackupRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,11 @@ class UpdateBackupRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'id' => 'required|exists:backups,id',
+            'name' => 'required|string|max:255',
+            'destination_id' => 'required|exists:destinations,id',
+            'source_path' => 'required|string',
+            'frequency' => 'required|string',
         ];
     }
 }

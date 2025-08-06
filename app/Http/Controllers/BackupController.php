@@ -76,9 +76,13 @@ class BackupController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Backup $backup)
+    public function edit(Backup $backup, BackupService $backupService)
     {
-        //
+        return Inertia::render('backups/edit', [
+            'backup' => $backup->load('destination.destination_type'),
+            'sourceTree' => $backupService->getSourceTreeLevel(storage_path('sources')),
+            'destinations' => Destination::with('destination_type')->get(),
+        ]);
     }
 
     /**
@@ -86,7 +90,11 @@ class BackupController extends Controller
      */
     public function update(UpdateBackupRequest $request, Backup $backup)
     {
-        //
+        $data = $request->validated();
+
+        $backup->update($data);
+
+        return redirect()->route('backups.show', $backup);
     }
 
     /**
@@ -94,7 +102,9 @@ class BackupController extends Controller
      */
     public function destroy(Backup $backup)
     {
-        //
+        $backup->delete();
+
+        return redirect()->route('backups.index');
     }
 
     public function execute(Backup $backup)

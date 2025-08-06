@@ -2,21 +2,12 @@ import Heading from '@/components/heading';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { type Backup } from '@/types/backups';
 import { Head, Link } from '@inertiajs/react';
 import { ColumnDef, flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
-import { MoreHorizontal } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -51,30 +42,6 @@ const columns: ColumnDef<Backup>[] = [
         accessorKey: 'frequency',
         header: 'Frequency',
     },
-    {
-        id: 'actions',
-        enableHiding: false,
-        cell: ({ row }) => {
-            return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                            <Link href={route('backups.show', { backup: row.original.id })}>View backup</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>Delete backup</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            );
-        },
-    },
 ];
 
 export default function BackupsIndex({ backups }: { backups: Backup[] }) {
@@ -84,8 +51,6 @@ export default function BackupsIndex({ backups }: { backups: Backup[] }) {
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
     });
-
-    console.log(backups);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

@@ -18,6 +18,12 @@ export type CreateBackupFormData = {
     frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
 };
 
+export type UpdateBackupFormData = {
+    id: number;
+} & CreateBackupFormData;
+
+export type BackupFormData = CreateBackupFormData | UpdateBackupFormData;
+
 export type SourceTreeItem = {
     name: string;
     dir: boolean;

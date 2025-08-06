@@ -43,4 +43,5 @@ export type BackupInstance = {
     failed_at: string;
     error: string;
     key_name: string;
+    created_at: string;
 };

@@ -5,11 +5,12 @@ namespace App\Jobs;
 use App\Models\BackupInstance;
 use App\Services\DestinationService;
 use App\Services\ZipService;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 
-class ProcessBackup implements ShouldQueue
+class ProcessBackup implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
@@ -23,6 +24,11 @@ class ProcessBackup implements ShouldQueue
      */
     public function handle(DestinationService $destinationService, ZipService $zipService): void
     {
+
+        $this->backupInstance->update([
+            'status' => 'processing',
+            'started_at' => now(),
+        ]);
 
         $backup = $this->backupInstance->backup;
 

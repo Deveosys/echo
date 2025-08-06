@@ -3,7 +3,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import Timer from '@/components/ui/timer';
 import AppLayout from '@/layouts/app-layout';
+import { formatTimeToSeconds } from '@/lib/utils';
 import { BreadcrumbItem } from '@/types';
 import { Backup } from '@/types/backups';
 import { Head, Link } from '@inertiajs/react';
@@ -97,7 +99,9 @@ export default function BackupsShow({ backup }: { backup: Backup }) {
                                                 ? 'success'
                                                 : backupInstance.status === 'failed'
                                                   ? 'destructive'
-                                                  : 'default'
+                                                  : backupInstance.status === 'processing'
+                                                    ? 'info'
+                                                    : 'default'
                                         }
                                     >
                                         {backupInstance.status}
@@ -105,9 +109,31 @@ export default function BackupsShow({ backup }: { backup: Backup }) {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="grid gap-2">
+                                {backupInstance.created_at && (
+                                    <div>
+                                        <p className="font-semibold">Created at</p>
+                                        <p> {new Date(backupInstance.created_at).toLocaleString()}</p>
+                                    </div>
+                                )}
+
+                                {backupInstance.status !== 'pending' && (
+                                    <div>
+                                        <p className="font-semibold">Processing time</p>
+                                        {backupInstance.status === 'processing' && <Timer startedAt={backupInstance.created_at} />}
+                                        {backupInstance.status === 'completed' &&
+                                            formatTimeToSeconds(
+                                                new Date(backupInstance.completed_at).getTime() - new Date(backupInstance.created_at).getTime(),
+                                            )}
+                                        {backupInstance.status === 'failed' &&
+                                            formatTimeToSeconds(
+                                                new Date(backupInstance.failed_at).getTime() - new Date(backupInstance.created_at).getTime(),
+                                            )}
+                                    </div>
+                                )}
+
                                 {backupInstance.key_name && (
                                     <div>
-                                        <p className="font-semibold">File path</p>
+                                        <p className="font-semibold">Key name</p>
                                         <p>{backupInstance.key_name}</p>
                                     </div>
                                 )}
@@ -117,6 +143,7 @@ export default function BackupsShow({ backup }: { backup: Backup }) {
                                         <p> {backupInstance.error}</p>
                                     </div>
                                 )}
+
                                 {backupInstance.started_at && (
                                     <div>
                                         <p className="font-semibold">Started at</p>

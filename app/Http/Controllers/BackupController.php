@@ -104,7 +104,6 @@ class BackupController extends Controller
         $backupInstance = BackupInstance::create([
             'backup_id' => $backup->id,
             'status' => 'pending',
-            'started_at' => now(),
         ]);
 
         ProcessBackup::dispatch($backupInstance);

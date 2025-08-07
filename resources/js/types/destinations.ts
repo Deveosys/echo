@@ -44,3 +44,12 @@ export type CreateDestinationFormData = {
     storage_account_key?: string;
     container_name?: string;
 };
+
+export type S3Upload = {
+    Initiated: string;
+    Initiator: { ID: string; DisplayName: string };
+    Key: string;
+    Owner: { DisplayName: string; ID: string };
+    StorageClass: string;
+    UploadId: string;
+};

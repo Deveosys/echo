@@ -6,11 +6,14 @@ use ZipArchive;
 
 class ZipService
 {
+    private string $zipPath;
+
     public function createZipFile(string $zipPath)
     {
+        $this->zipPath = $zipPath;
         $zip = new ZipArchive;
 
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        if ($zip->open($this->zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
             throw new \Exception('Cannot create zip file');
         }
 
@@ -48,5 +51,12 @@ class ZipService
         closedir($handle);
 
         return true;
+    }
+
+    public function deleteZipFile()
+    {
+        if (isset($this->zipPath) && file_exists($this->zipPath)) {
+            unlink($this->zipPath);
+        }
     }
 }

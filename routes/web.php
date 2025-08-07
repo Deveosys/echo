@@ -15,6 +15,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 
     Route::resource('destinations', DestinationController::class);
+    Route::post('destinations/{destination}/abort-s3-upload', [DestinationController::class, 'abortS3Upload'])->name('destinations.abort-s3-upload');
 
     Route::resource('backups', BackupController::class);
     Route::get('backups/{backup}/execute', [BackupController::class, 'execute'])->name('backups.execute');

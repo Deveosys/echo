@@ -3,11 +3,11 @@ import Heading from '@/components/heading';
 import { Card, CardContent } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
-import { Destination, S3Destination } from '@/types/destinations';
+import { Destination, S3Destination, S3Upload } from '@/types/destinations';
 import { Head } from '@inertiajs/react';
 import { useMemo } from 'react';
 
-export default function DestinationsShow({ destination }: { destination: Destination }) {
+export default function DestinationsShow({ destination, s3_uploads }: { destination: Destination; s3_uploads: S3Upload[] }) {
     const breadcrumbs: BreadcrumbItem[] = useMemo(
         () => [
             {
@@ -30,7 +30,7 @@ export default function DestinationsShow({ destination }: { destination: Destina
                 <Card>
                     <CardContent className="grid gap-2">
                         {destination.destination_type_type === 'App\\Models\\S3Destination' && (
-                            <ShowS3Destination s3Destination={destination as S3Destination} />
+                            <ShowS3Destination s3Destination={destination as S3Destination} s3_uploads={s3_uploads} />
                         )}
                     </CardContent>
                 </Card>

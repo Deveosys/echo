@@ -24,5 +24,6 @@ yarn-error.log
 /.vscode
 /.cursor
 /.zed
+/redis-data
 
 .DS_Store

@@ -93,7 +93,6 @@ class ProcessBackup implements ShouldBeUnique, ShouldQueue
                     if ($result['@metadata']['statusCode'] == '200') {
                         Log::info($this->backupInstance->id.'@'.$backup->name.' - File successfully uploaded to '.$result['ObjectURL'].'.');
                     }
-                    Log::info($this->backupInstance->id.'@'.$backup->name.' - '.$result);
                     // If the SDK chooses a multipart upload, try again if there is an exception.
                     // Unlike PutObject calls, multipart upload calls are not automatically retried.
                 } catch (MultipartUploadException $e) {

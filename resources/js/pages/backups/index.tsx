@@ -1,5 +1,6 @@
 import Heading from '@/components/heading';
 import TextLink from '@/components/text-link';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -39,8 +40,56 @@ const columns: ColumnDef<Backup>[] = [
         },
     },
     {
+        id: 'last-backup',
+        accessorKey: 'backup_instances',
+        header: 'Last Backup',
+        cell: ({ row }) => {
+            const lastInstance = row.original.backup_instances.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+            if (!lastInstance) {
+                return <div>-</div>;
+            }
+            return <div>{new Date(lastInstance.created_at).toLocaleString()}</div>;
+        },
+    },
+    {
+        id: 'status',
+        accessorFn: (row) => row.backup_instances[0].status,
+        header: 'Status',
+        cell: ({ row }) => {
+            console.log(row.original.backup_instances);
+            const lastInstance = row.original.backup_instances.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+            if (!lastInstance) {
+                return <div>-</div>;
+            }
+            return (
+                <Badge
+                    variant={
+                        row.original.backup_instances[0].status === 'completed'
+                            ? 'success'
+                            : row.original.backup_instances[0].status === 'failed'
+                              ? 'destructive'
+                              : 'info'
+                    }
+                >
+                    {row.original.backup_instances[0].status}
+                </Badge>
+            );
+        },
+    },
+    {
         accessorKey: 'frequency',
         header: 'Frequency',
+    },
+    {
+        id: 'execute',
+        header: 'Execute',
+        cell: ({ row }) => {
+            return (
+                <Button asChild variant="outline" size="sm">
+                    <Link href={route('backups.execute', row.original)}>Execute</Link>
+                </Button>
+            );
+        },
     },
 ];
 

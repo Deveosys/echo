@@ -20,7 +20,7 @@ class BackupController extends Controller
     public function index()
     {
         return Inertia::render('backups/index', [
-            'backups' => Backup::with('destination.destination_type')->get(),
+            'backups' => Backup::with('destination.destination_type', 'backupInstances')->get(),
         ]);
     }
 
